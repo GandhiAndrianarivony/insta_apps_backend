@@ -1,0 +1,45 @@
+version: '3.9'
+
+x-common-envFile: &envFile
+  env_file:
+    - ./.env
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: dericsolen/insta_like:v1.0
+    entrypoint: /apps/entrypoint.sh
+    <<: *envFile
+    volumes:
+      - ".:/apps"
+    ports:
+      - "0.0.0.0:${API_PORT:-8077}:8000"
+    depends_on:
+      insta_database:
+        condition: service_started
+    networks:
+      - instanet
+    stdin_open: true
+    tty: true
+
+  insta_database:
+    image: postgres:16
+    container_name: insta_database
+    <<: *envFile
+    volumes:
+      - pg_insta:/var/lib/postgresql/data
+    networks:
+      - instanet
+
+volumes:
+  pg_insta:
+    external: false
+
+networks:
+  instanet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.89.0/24
